@@ -14,6 +14,32 @@ typedef struct
 } killer;
 
 /*
+    Simple insertion sort to sort kills in descending order
+*/
+void sort(killer *killers, int foundKillers)
+{
+
+    int key, j;
+    char keyName[17];
+    for (int i = 1; i < foundKillers; i++)
+    {
+
+        key = killers[i].amountOfKills;
+        sprintf(keyName, killers[i].ign);
+        j = i;
+
+        while (j > 0 && killers[j - 1].amountOfKills < key)
+        {
+            killers[j].amountOfKills = killers[j - 1].amountOfKills;
+            sprintf(killers[j].ign, killers[j - 1].ign);
+            j = j - 1;
+        }
+        killers[j].amountOfKills = key;
+        sprintf(killers[j].ign, keyName);
+    }
+}
+
+/*
     Takes in the current line, a pointer to the start of "wurde getötet"
     and the nameBuffer Array to store the following name into
 */
@@ -49,11 +75,13 @@ void printFoundGame(killer *killers, int foundGames, int foundKillers, bool only
 {
     if (!onlyOnce)
     {
-        printf("GAME %d:\n", foundGames);
+        printf("GAME %d", foundGames);
+        printf("\n\n");
     }
     else
     {
-        printf("GAME: %d:\n", inputNumber);
+        printf("GAME: %d", inputNumber);
+        printf("\n\n");
     }
 
     for (int i = 0; i < foundKillers; i++)
@@ -129,6 +157,7 @@ void searchFile(FILE *log, long startOfFile, int foundGames, bool onlyOnce, int 
                 foundGames++;
                 startOfFile = ftell(log);
 
+                sort(killers, foundKillers);
                 printFoundGame(killers, foundGames, foundKillers, onlyOnce, inputNumber);
                 free(killers);
 
