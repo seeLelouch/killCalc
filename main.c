@@ -91,7 +91,11 @@ void getPositionsForGames(FILE *log, long amountGames, long *positions)
     }
 }
 
-void searchFile(FILE *log, long startOfFile, int foundGames)
+/*
+    Searches the file for kills and calls all other needed functions to print or write the names.
+    Calls itself resursively to search for more than one game
+*/
+void searchFile(FILE *log, long startOfFile, int foundGames, bool onlyOnce)
 {
     fseek(log, startOfFile, SEEK_SET);
 
@@ -120,8 +124,13 @@ void searchFile(FILE *log, long startOfFile, int foundGames)
 
                 printFoundGame(killers, foundGames, foundKillers);
                 free(killers);
-                searchFile(log, startOfFile, foundGames);
-                // IDEA: Recursively call the file search loop, break condition is EOF, start of file is set as function parameter
+
+                // Early termination if we only want to display one game.
+                if (onlyOnce)
+                    return;
+
+                // Recursively calls the file search loop, break condition is EOF, start of file is set as function parameter (startOfFile)
+                searchFile(log, startOfFile, foundGames, onlyOnce);
             }
 
             char *pKill = strstr(buffer, "wurde von");
@@ -163,6 +172,10 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    char input[4];
+    long startOfFile;
+    bool onlyOnce = false;
+
     FILE *log = fopen(argv[1], "r");
 
     long amountGames = searchFileForGames(log);
@@ -170,12 +183,45 @@ int main(int argc, char *argv[])
     long *positions = calloc(amountGames, sizeof(long));
     getPositionsForGames(log, amountGames, positions);
 
-    // startOfFile = positions[USERINPUT-1];
-    printf("FOUND %d GAMES, which one do you wish to display?\n", amountGames);
+    printf("FOUND %ld GAMES, which one do you wish to display?\n", amountGames);
     printf("Example: 1, 2, 3, all\n");
 
+    scanf(" %3s", input);
+    input[3] = '\0';
+    if (strncmp(input, "all", 4) == 0)
+    {
+        startOfFile = 0;
+    }
+    else
+    {
+        int inputNumber = atoi(input);
+
+        if (inputNumber == 0)
+        {
+            printf("Wrong input!\n");
+            printf("Example: 1, 2, 3, all\n");
+            printf("Termianting.\n");
+            free(positions);
+
+            system("PAUSE");
+            return 0;
+        }
+
+        if (inputNumber > amountGames)
+        {
+            printf("You input a number that is bigger than the amount of games, terminating.\n");
+            free(positions);
+
+            system("PAUSE");
+            return 0;
+        }
+
+        startOfFile = positions[inputNumber - 1];
+        onlyOnce = true;
+    }
+
     int foundGames = 0;
-    searchFile(log, startOfFile, foundGames);
+    searchFile(log, startOfFile, foundGames, onlyOnce);
 
     free(positions);
     printf("Reached end of program\n");
