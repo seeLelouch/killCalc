@@ -253,6 +253,13 @@ int main(int argc, char *argv[])
 
     long amountGames = searchFileForGames(log, stringWon);
 
+    if (amountGames < 1)
+    {
+        printf("No games found in log, terminating.\n");
+        system("PAUSE");
+        return 0;
+    }
+
     long *positions = calloc(amountGames, sizeof(long));
     getPositionsForGames(log, amountGames, positions, stringWon);
 
