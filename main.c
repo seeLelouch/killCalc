@@ -46,24 +46,13 @@ void sort(killer *killers, int foundKillers)
 void findName(char *line, char *pKill, char *nameBuffer, int offset)
 {
     int i = offset;
-    if (i == 10)
+
+    while (*(pKill + i) != ' ' && *(pKill + i) != '\n')
     {
-        while (*(pKill + i) != ' ')
-        {
-            nameBuffer[i - offset] = *(pKill + i);
-            i++;
-        }
-        nameBuffer[i - offset + 1] = '\0';
+        nameBuffer[i - offset] = *(pKill + i);
+        i++;
     }
-    else
-    {
-        while (*(pKill + i) != '\n')
-        {
-            nameBuffer[i - offset] = *(pKill + i);
-            i++;
-        }
-        nameBuffer[i - offset + 1] = '\0';
-    }
+    nameBuffer[i - offset + 1] = '\0';
 }
 
 /*
