@@ -271,6 +271,17 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    if (amountGames == 1)
+    {
+        printf("Found 1 Game:\n\n");
+        int foundGames = 0;
+        inputNumber = 1;
+        startOfFile = 0;
+        searchFile(log, startOfFile, foundGames, onlyOnce, inputNumber, stringWon, stringKill, offset);
+        system("PAUSE");
+        return 0;
+    }
+
     long *positions = calloc(amountGames, sizeof(long));
     getPositionsForGames(log, amountGames, positions, stringWon);
 
