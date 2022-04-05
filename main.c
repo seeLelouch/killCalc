@@ -211,7 +211,6 @@ void searchFile(FILE *log, long startOfFile, int foundGames, bool onlyOnce, int 
         }
     }
 
-    printf("reached termination\n");
     // TERMINATE RECURSION HERE === EOF
 }
 
@@ -257,8 +256,13 @@ int main(int argc, char *argv[])
     long *positions = calloc(amountGames, sizeof(long));
     getPositionsForGames(log, amountGames, positions, stringWon);
 
-    printf("FOUND %ld GAMES, which one do you wish to display?\n", amountGames);
-    printf("Example: 1, 2, 3, all\n");
+    printf("FOUND %ld GAMES, which one do you wish to display?\n\n", amountGames);
+    printf("Example: ");
+    for (int temp = 0; temp < amountGames; temp++)
+    {
+        printf("%d, ", temp + 1);
+    }
+    printf("all\n");
 
     scanf(" %3s", input);
     input[3] = '\0';
@@ -276,8 +280,15 @@ int main(int argc, char *argv[])
         if (inputNumber == 0)
         {
             printf("Wrong input!\n");
-            printf("Example: 1, 2, 3, all\n");
-            printf("Termianting.\n");
+
+            printf("Example: ");
+            for (int temp = 0; temp < amountGames; temp++)
+            {
+                printf("%d, ", temp + 1);
+            }
+            printf("all\n");
+
+            printf("Termnating.\n");
             free(positions);
 
             system("PAUSE");
@@ -301,7 +312,6 @@ int main(int argc, char *argv[])
     searchFile(log, startOfFile, foundGames, onlyOnce, inputNumber, stringWon, stringKill, offset);
 
     free(positions);
-    printf("Reached end of program\n");
     system("PAUSE");
     return 0;
 }
