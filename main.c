@@ -45,9 +45,16 @@ int checkNamePresent(killer *killers, char *nameBuffer)
     return 32;
 }
 
-void printFoundGame(killer *killers, int foundGames, int foundKillers)
+void printFoundGame(killer *killers, int foundGames, int foundKillers, bool onlyOnce, int inputNumber)
 {
-    printf("GAME %d:\n", foundGames);
+    if (!onlyOnce)
+    {
+        printf("GAME %d:\n", foundGames);
+    }
+    else
+    {
+        printf("GAME: %d:\n", inputNumber);
+    }
 
     for (int i = 0; i < foundKillers; i++)
     {
@@ -95,7 +102,7 @@ void getPositionsForGames(FILE *log, long amountGames, long *positions)
     Searches the file for kills and calls all other needed functions to print or write the names.
     Calls itself resursively to search for more than one game
 */
-void searchFile(FILE *log, long startOfFile, int foundGames, bool onlyOnce)
+void searchFile(FILE *log, long startOfFile, int foundGames, bool onlyOnce, int inputNumber)
 {
     fseek(log, startOfFile, SEEK_SET);
 
@@ -122,7 +129,7 @@ void searchFile(FILE *log, long startOfFile, int foundGames, bool onlyOnce)
                 foundGames++;
                 startOfFile = ftell(log);
 
-                printFoundGame(killers, foundGames, foundKillers);
+                printFoundGame(killers, foundGames, foundKillers, onlyOnce, inputNumber);
                 free(killers);
 
                 // Early termination if we only want to display one game.
@@ -130,7 +137,7 @@ void searchFile(FILE *log, long startOfFile, int foundGames, bool onlyOnce)
                     return;
 
                 // Recursively calls the file search loop, break condition is EOF, start of file is set as function parameter (startOfFile)
-                searchFile(log, startOfFile, foundGames, onlyOnce);
+                searchFile(log, startOfFile, foundGames, onlyOnce, inputNumber);
             }
 
             char *pKill = strstr(buffer, "wurde von");
@@ -175,6 +182,7 @@ int main(int argc, char *argv[])
     char input[4];
     long startOfFile;
     bool onlyOnce = false;
+    int inputNumber;
 
     FILE *log = fopen(argv[1], "r");
 
@@ -188,13 +196,16 @@ int main(int argc, char *argv[])
 
     scanf(" %3s", input);
     input[3] = '\0';
+
+    system("cls");
+
     if (strncmp(input, "all", 4) == 0)
     {
         startOfFile = 0;
     }
     else
     {
-        int inputNumber = atoi(input);
+        inputNumber = atoi(input);
 
         if (inputNumber == 0)
         {
@@ -221,7 +232,7 @@ int main(int argc, char *argv[])
     }
 
     int foundGames = 0;
-    searchFile(log, startOfFile, foundGames, onlyOnce);
+    searchFile(log, startOfFile, foundGames, onlyOnce, inputNumber);
 
     free(positions);
     printf("Reached end of program\n");
