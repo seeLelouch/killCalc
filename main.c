@@ -87,7 +87,8 @@ bool checkIfWinnerValid(killer *killers, char *winner, int foundKillers)
 void printFoundGame(killer *killers, int foundGames, int foundKillers, bool onlyOnce, int inputNumber, char *winner)
 {
 
-    onlyOnce ? printf("GAME: %d", inputNumber) : printf("GAME %d", foundGames);
+    onlyOnce ? printf("GAME: %d ", inputNumber) : printf("GAME %d ", foundGames);
+    printf("\n----------------------------");
 
     printf("\n\n");
 
@@ -282,12 +283,14 @@ int main(int argc, char *argv[])
 
     if (amountGames == 1)
     {
-        printf("Found 1 Game:\n\n");
+        printf("Found 1 Game:\n");
         int foundGames = 0;
         onlyOnce = true;
         inputNumber = 1;
         startOfFile = 0;
         searchFile(log, startOfFile, foundGames, onlyOnce, inputNumber, stringWon, stringKill, offset, winner);
+
+        printf("\nMADE BY see#0368 (discord) <3\n");
         system("PAUSE");
         return 0;
     }
