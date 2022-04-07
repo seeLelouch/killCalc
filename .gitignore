@@ -56,3 +56,6 @@ dkms.conf
 
 #Log files so no logs get commited
 *.log
+
+#Textfiles
+*.txt
