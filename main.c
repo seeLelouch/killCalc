@@ -84,7 +84,7 @@ bool checkIfWinnerValid(killer *killers, char *winner, int foundKillers)
     return returnValue;
 }
 
-void printFoundGame(killer *killers, int foundGames, int foundKillers, bool onlyOnce, int inputNumber, char *winner)
+void printFoundGame(killer *killers, int foundGames, int foundKillers, bool onlyOnce, bool timeOut, int inputNumber, char *winner)
 {
 
     onlyOnce ? printf("GAME: %d ", inputNumber) : printf("GAME %d ", foundGames);
@@ -100,7 +100,14 @@ void printFoundGame(killer *killers, int foundGames, int foundKillers, bool only
 
     printf("\n");
 
-    checkIfWinnerValid(killers, winner, foundKillers) ? printf("Winner: %s (and potential teammates)", winner) : printf("No Winner found wtf please send me the log in discord");
+    if (timeOut)
+    {
+        printf("Game was ended with damage calc, please check winner manually");
+    }
+    else
+    {
+        checkIfWinnerValid(killers, winner, foundKillers) ? printf("Winner: %s (and potential teammates)", winner) : printf("No Winner found wtf please send me the log in discord");
+    }
 
     printf("\n\n");
 }
@@ -172,6 +179,8 @@ void searchFile(FILE *log, long startOfFile, int foundGames, bool onlyOnce, int 
     int amountKillLines = 0;
     int foundKillers = 0;
 
+    bool timeOut = false;
+
     killer *killers = calloc(32, sizeof(killer));
 
     // Takes a line until newline until EOF
@@ -184,11 +193,16 @@ void searchFile(FILE *log, long startOfFile, int foundGames, bool onlyOnce, int 
 
             if (strstr(buffer, stringWon) || strstr(buffer, stringWonGame))
             {
+                if (strstr(buffer, stringWonGame))
+                {
+                    timeOut = true;
+                }
+
                 foundGames++;
                 startOfFile = ftell(log);
 
                 sort(killers, foundKillers);
-                printFoundGame(killers, foundGames, foundKillers, onlyOnce, inputNumber, winner);
+                printFoundGame(killers, foundGames, foundKillers, onlyOnce, timeOut, inputNumber, winner);
                 free(killers);
 
                 // Early termination if we only want to display one game.
@@ -245,7 +259,9 @@ int main(int argc, char *argv[])
 
     char input[4];
     long startOfFile;
+
     bool onlyOnce = false;
+
     int inputNumber;
 
     char stringWon[50];
