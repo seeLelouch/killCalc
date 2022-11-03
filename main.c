@@ -25,17 +25,17 @@ void sort(killer *killers, int foundKillers)
     {
 
         key = killers[i].amountOfKills;
-        sprintf(keyName, killers[i].ign);
+        sprintf(keyName, "%s", killers[i].ign);
         j = i;
 
         while (j > 0 && killers[j - 1].amountOfKills < key)
         {
             killers[j].amountOfKills = killers[j - 1].amountOfKills;
-            sprintf(killers[j].ign, killers[j - 1].ign);
+            sprintf(killers[j].ign, "%s", killers[j - 1].ign);
             j = j - 1;
         }
         killers[j].amountOfKills = key;
-        sprintf(killers[j].ign, keyName);
+        sprintf(killers[j].ign, "%s", keyName);
     }
 }
 
@@ -106,7 +106,7 @@ void printFoundGame(killer *killers, int foundGames, int foundKillers, bool only
     }
     else
     {
-        checkIfWinnerValid(killers, winner, foundKillers) ? printf("Winner: %s (and potential teammates)", winner) : printf("No Winner found wtf please send me the log in discord");
+        checkIfWinnerValid(killers, winner, foundKillers) ? printf("Winner: %s (and potential teammates)", winner) : printf("Game didn't have a single kill, so no winner found");
     }
 
     printf("\n\n");
@@ -167,7 +167,7 @@ void getPositionsForGames(FILE *log, long amountGames, long *positions, char *st
     Searches the file for kills and calls all other needed functions to print or write the names.
     Calls itself resursively to search for more than one game
 */
-void searchFile(FILE *log, long startOfFile, int foundGames, bool onlyOnce, int inputNumber, char *stringWon, char *stringWonGame, char *stringKill, int offset, char *winner)
+void searchFile(FILE *log, long startOfFile, int foundGames, long *amountOfGames, bool onlyOnce, int inputNumber, char *stringWon, char *stringWonGame, char *stringKill, int offset, char *winner)
 {
     fseek(log, startOfFile, SEEK_SET);
 
@@ -175,75 +175,70 @@ void searchFile(FILE *log, long startOfFile, int foundGames, bool onlyOnce, int 
     char stringToFind[50];
     sprintf(stringToFind, "[SurvivalGames]");
 
-    int amountValidLines = 0;
-    int amountKillLines = 0;
     int foundKillers = 0;
 
     bool timeOut = false;
 
-    killer *killers = calloc(32, sizeof(killer));
+    killer *killers = (killer *)calloc(32, sizeof(killer));
 
     // Takes a line until newline until EOF
     while (fgets(buffer, MAX_BUFFER - 1, log) != NULL)
     {
-        // searches for [SurvivalGames]
-        if (strstr(buffer, stringToFind) != 0)
+        // checks for winning string
+        if (strstr(buffer, stringWon) || strstr(buffer, stringWonGame))
         {
-            amountValidLines++;
-
-            if (strstr(buffer, stringWon) || strstr(buffer, stringWonGame))
+            if (strstr(buffer, stringWonGame))
             {
-                if (strstr(buffer, stringWonGame))
-                {
-                    timeOut = true;
-                }
-
-                foundGames++;
-                startOfFile = ftell(log);
-
-                sort(killers, foundKillers);
-                printFoundGame(killers, foundGames, foundKillers, onlyOnce, timeOut, inputNumber, winner);
-                free(killers);
-
-                // Early termination if we only want to display one game.
-                if (onlyOnce)
-                    return;
-
-                /*
-                 Recursively calls the file search loop, break condition is EOF, start of file is set as function parameter (startOfFile)
-                and gets changed to next found game every call
-                */
-                searchFile(log, startOfFile, foundGames, onlyOnce, inputNumber, stringWon, stringWonGame, stringKill, offset, winner);
+                timeOut = true;
             }
 
-            char *pKill = strstr(buffer, stringKill);
-            if (pKill != 0)
+            foundGames++;
+            startOfFile = ftell(log);
+
+            sort(killers, foundKillers);
+            printFoundGame(killers, foundGames, foundKillers, onlyOnce, timeOut, inputNumber, winner);
+            free(killers);
+
+            // Early termination if we only want to display one game.
+            if (onlyOnce)
+                return;
+
+            // Stop so no allocation of killers after last game
+            if (foundGames == *amountOfGames)
+                return;
+
+            /*
+             Recursively calls the file search loop, break condition is EOF, start of file is set as function parameter (startOfFile)
+            and gets changed to next found game every call
+            */
+            searchFile(log, startOfFile, foundGames, amountOfGames, onlyOnce, inputNumber, stringWon, stringWonGame, stringKill, offset, winner);
+        }
+
+        char *pKill = strstr(buffer, stringKill);
+        if (pKill != 0)
+        {
+            // ANFANGSBUCHSTABE VON JEDEM KILLER: printf("pkill: %c\n", *(pKill + 10));
+            char *nameBuffer = calloc(17, sizeof(char));
+            findName(buffer, pKill, nameBuffer, offset);
+            int killerPosition = checkNamePresent(killers, nameBuffer);
+
+            sprintf(winner, nameBuffer, 16);
+            winner[16] = '\0';
+
+            if (killerPosition < 32)
             {
-                amountKillLines++;
-                // ANFANGSBUCHSTABE VON JEDEM KILLER: printf("pkill: %c\n", *(pKill + 10));
-                char *nameBuffer = calloc(17, sizeof(char));
-                findName(buffer, pKill, nameBuffer, offset);
-                int killerPosition = checkNamePresent(killers, nameBuffer);
-
-                sprintf(winner, nameBuffer, 16);
-                winner[16] = '\0';
-
-                if (killerPosition < 32)
-                {
-                    killers[killerPosition].amountOfKills++;
-                    free(nameBuffer);
-                }
-                else
-                {
-                    sprintf(killers[foundKillers].ign, nameBuffer);
-                    killers[foundKillers].amountOfKills++;
-                    foundKillers++;
-                    free(nameBuffer);
-                }
+                killers[killerPosition].amountOfKills++;
+                free(nameBuffer);
+            }
+            else
+            {
+                sprintf(killers[foundKillers].ign, "%s", nameBuffer);
+                killers[foundKillers].amountOfKills++;
+                foundKillers++;
+                free(nameBuffer);
             }
         }
     }
-
     // TERMINATE RECURSION HERE === EOF
 }
 
@@ -296,6 +291,7 @@ int main(int argc, char *argv[])
     if (amountGames < 1)
     {
         printf("No games found in log, terminating.\n");
+        fclose(log);
         system("PAUSE");
         return 0;
     }
@@ -307,14 +303,15 @@ int main(int argc, char *argv[])
         onlyOnce = true;
         inputNumber = 1;
         startOfFile = 0;
-        searchFile(log, startOfFile, foundGames, onlyOnce, inputNumber, stringWon, stringWonGame, stringKill, offset, winner);
+        searchFile(log, startOfFile, foundGames, &amountGames, onlyOnce, inputNumber, stringWon, stringWonGame, stringKill, offset, winner);
 
         printf("\nMADE BY see#0368 (discord) <3\n");
+        fclose(log);
         system("PAUSE");
         return 0;
     }
 
-    long *positions = calloc(amountGames, sizeof(long));
+    long *positions = (long *)calloc(amountGames + 1, sizeof(long));
     getPositionsForGames(log, amountGames, positions, stringWon, stringWonGame);
 
     printf("FOUND %ld GAMES, which one do you wish to display?\n\n", amountGames);
@@ -353,6 +350,7 @@ int main(int argc, char *argv[])
             printf("Termnating.\n");
             free(positions);
 
+            fclose(log);
             system("PAUSE");
             return 0;
         }
@@ -362,6 +360,7 @@ int main(int argc, char *argv[])
             printf("You input a number that is bigger than the amount of games, terminating.\n");
             free(positions);
 
+            fclose(log);
             system("PAUSE");
             return 0;
         }
@@ -371,10 +370,15 @@ int main(int argc, char *argv[])
     }
 
     int foundGames = 0;
-    searchFile(log, startOfFile, foundGames, onlyOnce, inputNumber, stringWon, stringWonGame, stringKill, offset, winner);
+
+    if (!onlyOnce)
+        inputNumber = 0;
+
+    searchFile(log, startOfFile, foundGames, &amountGames, onlyOnce, inputNumber, stringWon, stringWonGame, stringKill, offset, winner);
 
     free(positions);
     printf("\nMADE BY see#0368 (discord) <3\n");
+    fclose(log);
     system("PAUSE");
     return 0;
 }
